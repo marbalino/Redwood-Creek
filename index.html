@@ -49,6 +49,23 @@
       border-bottom: 2px solid #2c5f2e;
     }
     .version-bar button:hover:not(.active) { background: #eaeaea; }
+
+    .locate-btn {
+      position: absolute;
+      bottom: 30px; left: 12px;
+      z-index: 1000;
+      background: #fff;
+      border: none;
+      border-radius: 6px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+      width: 36px; height: 36px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.15s;
+    }
+    .locate-btn:hover { background: #f0f0f0; }
+    .locate-btn.active { background: #e8f4ea; }
+    .locate-btn svg { width: 18px; height: 18px; }
     .group-label {
       padding: 6px 14px 2px;
       font-size: 10px;
@@ -78,6 +95,14 @@
 <body>
 
 <div id="map"></div>
+
+<button class="locate-btn" id="locate-btn" title="Show my location" onclick="toggleLocate()">
+  <svg viewBox="0 0 24 24" fill="none" stroke="#2c5f2e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="3"/>
+    <path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
+    <circle cx="12" cy="12" r="8" stroke-dasharray="2 2"/>
+  </svg>
+</button>
 
 <div id="panel">
   <h2>Redwood Creek</h2>
@@ -251,6 +276,48 @@ bindVector('l-outfall',     'outfall');
 bindVector('l-restoration', 'restoration');
 bindVector('l-work-limit',  'workLimit');
 bindVector('l-boundary',    'boundary');
+
+// ── Geolocation ───────────────────────────────────────────────────────────────
+let locating = false;
+let locationMarker = null;
+let locationCircle = null;
+
+function toggleLocate() {
+  if (locating) {
+    map.stopLocate();
+    locating = false;
+    document.getElementById('locate-btn').classList.remove('active');
+    if (locationMarker) { map.removeLayer(locationMarker); locationMarker = null; }
+    if (locationCircle) { map.removeLayer(locationCircle); locationCircle = null; }
+    return;
+  }
+  locating = true;
+  document.getElementById('locate-btn').classList.add('active');
+  map.locate({ watch: true, enableHighAccuracy: true });
+}
+
+map.on('locationfound', e => {
+  if (locationMarker) {
+    locationMarker.setLatLng(e.latlng);
+    locationCircle.setLatLng(e.latlng).setRadius(e.accuracy);
+  } else {
+    locationCircle = L.circle(e.latlng, {
+      radius: e.accuracy,
+      color: '#2c5f2e', fillColor: '#2c5f2e', fillOpacity: 0.12, weight: 1
+    }).addTo(map);
+    locationMarker = L.circleMarker(e.latlng, {
+      radius: 7, color: '#fff', weight: 2,
+      fillColor: '#2c5f2e', fillOpacity: 1
+    }).addTo(map).bindPopup(`<b>You are here</b><br>Accuracy: ±${Math.round(e.accuracy)} m`);
+    map.setView(e.latlng, Math.max(map.getZoom(), 17));
+  }
+});
+
+map.on('locationerror', e => {
+  locating = false;
+  document.getElementById('locate-btn').classList.remove('active');
+  alert('Location unavailable: ' + e.message);
+});
 </script>
 </body>
 </html>
