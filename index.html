@@ -118,8 +118,6 @@
 
   <div class="group-label">Rasters</div>
   <div class="layer-row"><input type="checkbox" id="t-hillshade" checked /><div class="swatch" style="background:#8a8a8a;opacity:0.6"></div><label for="t-hillshade">Elevation</label></div>
-  <div class="layer-row"><input type="checkbox" id="t-pg5" /><div class="swatch" style="background:#4a90d9;opacity:0.6"></div><label for="t-pg5">Plan Sheet 5</label></div>
-  <div class="layer-row"><input type="checkbox" id="t-sewer" checked /><div class="swatch" style="background:#d94a4a;opacity:0.6"></div><label for="t-sewer">Sewer Plans (Pg 4)</label></div>
 
   <div class="group-label">Survey</div>
   <div class="layer-row"><input type="checkbox" id="l-creek-bank" checked /><div class="swatch" style="background:#1a73e8"></div><label for="l-creek-bank">Creek Bank</label></div>
@@ -151,12 +149,6 @@ const map = L.map('map', { layers: [osm], zoomControl: true }).setView([37.83, -
 // ── Raster tile overlays ──────────────────────────────────────────────────────
 const hillshade = L.tileLayer('tiles/redwood_rd_surface/{z}/{x}/{y}.png', {
   maxNativeZoom: 20, maxZoom: 20, opacity: 0.5, tms: true
-});
-const pg5 = L.tileLayer('tiles/redwood_pg5/{z}/{x}/{y}.png', {
-  maxNativeZoom: 20, maxZoom: 20, opacity: 0.75, tms: true
-});
-const sewerPlans = L.tileLayer('tiles/sewer_plans/{z}/{x}/{y}.png', {
-  maxNativeZoom: 20, maxZoom: 20, opacity: 0.8, tms: true
 });
 
 // ── Vector style helpers ──────────────────────────────────────────────────────
@@ -207,7 +199,6 @@ async function initLayers() {
   layers.creekSurvey_v2.addTo(map);
   ['manhole','lamphole','outfall','restoration','buffer300'].forEach(k => layers[k].addTo(map));
   hillshade.addTo(map);
-  sewerPlans.addTo(map);
 
   map.fitBounds(layers.creekBank_v2.getBounds().pad(0.3));
 }
@@ -243,8 +234,6 @@ function bindTile(id, tileLayer) {
   });
 }
 bindTile('t-hillshade', hillshade);
-bindTile('t-pg5', pg5);
-bindTile('t-sewer', sewerPlans);
 
 // ── Vector checkboxes ─────────────────────────────────────────────────────────
 function bindVector(id, key) {
