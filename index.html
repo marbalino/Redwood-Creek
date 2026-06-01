@@ -259,6 +259,25 @@ bindVector('l-outfall',     'outfall');
 bindVector('l-restoration', 'restoration');
 bindVector('l-buffer',      'buffer300');
 
+// ── Right-click coordinates ───────────────────────────────────────────────────
+map.on('contextmenu', e => {
+  const lat = e.latlng.lat.toFixed(6);
+  const lng = e.latlng.lng.toFixed(6);
+  const text = `${lat}, ${lng}`;
+
+  navigator.clipboard.writeText(text).catch(() => {});
+
+  L.popup({ closeButton: true, className: 'coords-popup' })
+    .setLatLng(e.latlng)
+    .setContent(`
+      <div style="font-size:12px;line-height:1.6">
+        <div><b>Coordinates</b></div>
+        <div style="font-family:monospace;margin:4px 0">${text}</div>
+        <div style="font-size:10px;color:#888">Copied to clipboard</div>
+      </div>`)
+    .openOn(map);
+});
+
 // ── Geolocation ───────────────────────────────────────────────────────────────
 let locating = false;
 let locationMarker = null;
