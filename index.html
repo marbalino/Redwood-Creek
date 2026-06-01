@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Redwood Creek</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-rotate@0.2.8/dist/leaflet-rotate.css" />
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
@@ -66,6 +67,51 @@
     .locate-btn:hover { background: #f0f0f0; }
     .locate-btn.active { background: #e8f4ea; }
     .locate-btn svg { width: 18px; height: 18px; }
+
+    #compass {
+      position: absolute;
+      bottom: 76px; left: 12px;
+      z-index: 1000;
+      width: 48px; height: 48px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+      cursor: grab;
+      display: flex; align-items: center; justify-content: center;
+      user-select: none;
+      touch-action: none;
+    }
+    #compass:active { cursor: grabbing; }
+    #compass-inner {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      border: 1.5px solid #ddd;
+      position: relative;
+      display: flex; align-items: center; justify-content: center;
+      transition: transform 0.1s linear;
+    }
+    .needle-n {
+      position: absolute; top: 1px;
+      width: 0; height: 0;
+      border-left: 5px solid transparent;
+      border-right: 5px solid transparent;
+      border-bottom: 14px solid #c0392b;
+      left: 50%; transform: translateX(-50%);
+    }
+    .needle-s {
+      position: absolute; bottom: 1px;
+      width: 0; height: 0;
+      border-left: 5px solid transparent;
+      border-right: 5px solid transparent;
+      border-top: 14px solid #aaa;
+      left: 50%; transform: translateX(-50%);
+    }
+    .needle-label {
+      position: absolute; top: -1px;
+      font-size: 8px; font-weight: 700;
+      color: #c0392b; left: 50%;
+      transform: translateX(-50%) translateY(-110%);
+    }
     .group-label {
       padding: 6px 14px 2px;
       font-size: 10px;
@@ -95,6 +141,14 @@
 <body>
 
 <div id="map"></div>
+
+<div id="compass" title="Drag to rotate map · Click to reset north">
+  <div id="compass-inner">
+    <div class="needle-n"></div>
+    <div class="needle-s"></div>
+    <span class="needle-label">N</span>
+  </div>
+</div>
 
 <button class="locate-btn" id="locate-btn" title="Show my location" onclick="toggleLocate()">
   <svg viewBox="0 0 24 24" fill="none" stroke="#2c5f2e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -133,6 +187,7 @@
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-rotate@0.2.8/dist/leaflet-rotate-src.js"></script>
 <script>
 // ── Basemaps ──────────────────────────────────────────────────────────────────
 const osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -144,7 +199,7 @@ const sat = L.tileLayer(
 );
 
 // ── Map init ──────────────────────────────────────────────────────────────────
-const map = L.map('map', { layers: [osm], zoomControl: true }).setView([37.83, -122.17], 16);
+const map = L.map('map', { layers: [osm], zoomControl: true, rotate: true, rotateControl: false }).setView([37.83, -122.17], 16);
 
 // ── Raster tile overlays ──────────────────────────────────────────────────────
 const hillshade = L.tileLayer('tiles/redwood_rd_surface/{z}/{x}/{y}.png', {
@@ -258,6 +313,52 @@ bindVector('l-lamphole',    'lamphole');
 bindVector('l-outfall',     'outfall');
 bindVector('l-restoration', 'restoration');
 bindVector('l-buffer',      'buffer300');
+
+// ── Compass rotation ──────────────────────────────────────────────────────────
+const compass     = document.getElementById('compass');
+const compassInner = document.getElementById('compass-inner');
+let dragging = false;
+let didDrag  = false;
+
+function getBearingFromEvent(e) {
+  const rect = compass.getBoundingClientRect();
+  const cx = rect.left + rect.width  / 2;
+  const cy = rect.top  + rect.height / 2;
+  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+  const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+  return Math.atan2(clientX - cx, cy - clientY) * 180 / Math.PI;
+}
+
+function updateCompass(bearing) {
+  compassInner.style.transform = `rotate(${-bearing}deg)`;
+}
+
+compass.addEventListener('mousedown',  e => { dragging = true; didDrag = false; e.preventDefault(); });
+compass.addEventListener('touchstart', e => { dragging = true; didDrag = false; }, { passive: true });
+
+window.addEventListener('mousemove', e => {
+  if (!dragging) return;
+  didDrag = true;
+  const b = getBearingFromEvent(e);
+  map.setBearing(b);
+  updateCompass(b);
+});
+window.addEventListener('touchmove', e => {
+  if (!dragging) return;
+  didDrag = true;
+  const b = getBearingFromEvent(e);
+  map.setBearing(b);
+  updateCompass(b);
+}, { passive: true });
+
+window.addEventListener('mouseup',  () => { dragging = false; });
+window.addEventListener('touchend', () => { dragging = false; });
+
+compass.addEventListener('click', () => {
+  if (didDrag) return;
+  map.setBearing(0);
+  updateCompass(0);
+});
 
 // ── Right-click coordinates ───────────────────────────────────────────────────
 map.on('contextmenu', e => {
