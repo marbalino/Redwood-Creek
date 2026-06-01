@@ -124,8 +124,6 @@
   <div class="group-label">Survey</div>
   <div class="layer-row"><input type="checkbox" id="l-creek-bank" checked /><div class="swatch" style="background:#1a73e8"></div><label for="l-creek-bank">Creek Bank</label></div>
   <div class="layer-row"><input type="checkbox" id="l-creek-survey" checked /><div class="swatch" style="background:#00b4d8"></div><label for="l-creek-survey">Creek Survey</label></div>
-  <div class="layer-row"><input type="checkbox" id="l-traverse" /><div class="swatch" style="background:#0077b6;border-radius:50%"></div><label for="l-traverse">Traverse Points</label></div>
-
   <div class="group-label">Infrastructure</div>
   <div class="layer-row"><input type="checkbox" id="l-manhole" checked /><div class="swatch" style="background:#e67e22;border-radius:50%"></div><label for="l-manhole">Sewer Manhole</label></div>
   <div class="layer-row"><input type="checkbox" id="l-lamphole" checked /><div class="swatch" style="background:#f1c40f;border-radius:50%"></div><label for="l-lamphole">Sewer Lamphole</label></div>
@@ -133,8 +131,6 @@
 
   <div class="group-label">Project</div>
   <div class="layer-row"><input type="checkbox" id="l-restoration" checked /><div class="swatch" style="background:#27ae60;opacity:0.5"></div><label for="l-restoration">Restoration Area</label></div>
-  <div class="layer-row"><input type="checkbox" id="l-work-limit" /><div class="swatch" style="background:#f39c12;opacity:0.5"></div><label for="l-work-limit">Work Limit</label></div>
-  <div class="layer-row"><input type="checkbox" id="l-boundary" /><div class="swatch" style="background:#9b59b6;opacity:0.5"></div><label for="l-boundary">Project Boundary</label></div>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -198,13 +194,10 @@ async function initLayers() {
     creekBank_v2:  await loadGeoJSON('data/creek_bank_v2.geojson',         lineStyle('#1a73e8')),
     creekSurvey_v1:await loadGeoJSON('data/creek_survey_v1.geojson',       lineStyle('#00b4d8')),
     creekSurvey_v2:await loadGeoJSON('data/creek_centerline_v2.geojson',   lineStyle('#00b4d8')),
-    traverse:      await loadGeoJSON('data/creek_traverse.geojson',        pointStyle('#0077b6', 4), true),
     manhole:       await loadGeoJSON('data/sewer_manhole.geojson',         pointStyle('#e67e22', 6), true),
     lamphole:      await loadGeoJSON('data/sewer_lamphole.geojson',        pointStyle('#f1c40f', 5), true),
     outfall:       await loadGeoJSON('data/outfall.geojson',               pointStyle('#e74c3c', 7), true),
     restoration:   await loadGeoJSON('data/creek_restoration_area.geojson',fillStyle('#27ae60')),
-    workLimit:     await loadGeoJSON('data/redwood_work_limit.geojson',    fillStyle('#f39c12')),
-    boundary:      await loadGeoJSON('data/project_boundary.geojson',      fillStyle('#9b59b6')),
   };
 
   // Start on v2
@@ -269,13 +262,10 @@ document.getElementById('l-creek-survey').addEventListener('change', e => {
   e.target.checked ? lyr.addTo(map) : map.removeLayer(lyr);
 });
 
-bindVector('l-traverse',    'traverse');
 bindVector('l-manhole',     'manhole');
 bindVector('l-lamphole',    'lamphole');
 bindVector('l-outfall',     'outfall');
 bindVector('l-restoration', 'restoration');
-bindVector('l-work-limit',  'workLimit');
-bindVector('l-boundary',    'boundary');
 
 // ── Geolocation ───────────────────────────────────────────────────────────────
 let locating = false;
