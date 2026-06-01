@@ -1,0 +1,11 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# GDAL aux files
+*.aux.xml
+*.ovr
+
+# Large source rasters (keep tiles, not originals)
+*.tif
+*.tiff

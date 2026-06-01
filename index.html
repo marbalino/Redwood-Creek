@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Redwood Creek</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    #map { height: 100vh; width: 100%; }
+
+    #panel {
+      position: absolute;
+      top: 12px; right: 12px;
+      z-index: 1000;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+      width: 220px;
+      overflow: hidden;
+    }
+    #panel h2 {
+      background: #2c5f2e;
+      color: #fff;
+      padding: 10px 14px;
+      font-size: 13px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+    .group-label {
+      padding: 6px 14px 2px;
+      font-size: 10px;
+      font-weight: 700;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+    }
+    .layer-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 14px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .layer-row:hover { background: #f5f5f5; }
+    .layer-row input { cursor: pointer; accent-color: #2c5f2e; }
+    .swatch {
+      width: 14px; height: 14px;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+    .layer-row label { font-size: 12px; cursor: pointer; }
+  </style>
+</head>
+<body>
+
+<div id="map"></div>
+
+<div id="panel">
+  <h2>Redwood Creek</h2>
+
+  <div class="group-label">Basemaps</div>
+  <div class="layer-row"><input type="radio" name="base" id="r-osm" checked /><label for="r-osm">OpenStreetMap</label></div>
+  <div class="layer-row"><input type="radio" name="base" id="r-sat" /><label for="r-sat">ESRI Satellite</label></div>
+
+  <div class="group-label">Rasters</div>
+  <div class="layer-row"><input type="checkbox" id="t-hillshade" checked /><div class="swatch" style="background:#8a8a8a;opacity:0.6"></div><label for="t-hillshade">Terrain (Hillshade)</label></div>
+  <div class="layer-row"><input type="checkbox" id="t-pg5" /><div class="swatch" style="background:#4a90d9;opacity:0.6"></div><label for="t-pg5">Plan Sheet 5</label></div>
+  <div class="layer-row"><input type="checkbox" id="t-sewer" checked /><div class="swatch" style="background:#d94a4a;opacity:0.6"></div><label for="t-sewer">Sewer Plans (Pg 4)</label></div>
+
+  <div class="group-label">Survey</div>
+  <div class="layer-row"><input type="checkbox" id="l-creek-bank" checked /><div class="swatch" style="background:#1a73e8"></div><label for="l-creek-bank">Creek Bank</label></div>
+  <div class="layer-row"><input type="checkbox" id="l-creek-survey" checked /><div class="swatch" style="background:#00b4d8"></div><label for="l-creek-survey">Creek Survey</label></div>
+  <div class="layer-row"><input type="checkbox" id="l-traverse" /><div class="swatch" style="background:#0077b6;border-radius:50%"></div><label for="l-traverse">Traverse Points</label></div>
+
+  <div class="group-label">Infrastructure</div>
+  <div class="layer-row"><input type="checkbox" id="l-manhole" checked /><div class="swatch" style="background:#e67e22;border-radius:50%"></div><label for="l-manhole">Sewer Manhole</label></div>
+  <div class="layer-row"><input type="checkbox" id="l-lamphole" checked /><div class="swatch" style="background:#f1c40f;border-radius:50%"></div><label for="l-lamphole">Sewer Lamphole</label></div>
+  <div class="layer-row"><input type="checkbox" id="l-outfall" checked /><div class="swatch" style="background:#e74c3c;border-radius:50%"></div><label for="l-outfall">Outfall</label></div>
+
+  <div class="group-label">Project</div>
+  <div class="layer-row"><input type="checkbox" id="l-restoration" checked /><div class="swatch" style="background:#27ae60;opacity:0.5"></div><label for="l-restoration">Restoration Area</label></div>
+  <div class="layer-row"><input type="checkbox" id="l-work-limit" /><div class="swatch" style="background:#f39c12;opacity:0.5"></div><label for="l-work-limit">Work Limit</label></div>
+  <div class="layer-row"><input type="checkbox" id="l-boundary" /><div class="swatch" style="background:#9b59b6;opacity:0.5"></div><label for="l-boundary">Project Boundary</label></div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+// ── Basemaps ──────────────────────────────────────────────────────────────────
+const osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  maxZoom: 20, attribution: '© OpenStreetMap contributors'
+});
+const sat = L.tileLayer(
+  'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+  { maxZoom: 20, attribution: 'Tiles © Esri' }
+);
+
+// ── Map init ──────────────────────────────────────────────────────────────────
+const map = L.map('map', { layers: [osm], zoomControl: true }).setView([37.83, -122.17], 16);
+
+// ── Raster tile overlays ──────────────────────────────────────────────────────
+const hillshade = L.tileLayer('tiles/redwood_rd_surface/{z}/{x}/{y}.png', {
+  maxZoom: 20, opacity: 0.5, tms: false
+});
+const pg5 = L.tileLayer('tiles/redwood_pg5/{z}/{x}/{y}.png', {
+  maxZoom: 20, opacity: 0.75, tms: false
+});
+const sewerPlans = L.tileLayer('tiles/sewer_plans/{z}/{x}/{y}.png', {
+  maxZoom: 20, opacity: 0.8, tms: false
+});
+
+// ── Vector style helpers ──────────────────────────────────────────────────────
+const lineStyle = color => ({ color, weight: 2, opacity: 0.9 });
+const fillStyle = (color, fill) => ({ color, weight: 1.5, opacity: 0.9, fillColor: fill || color, fillOpacity: 0.25 });
+const dotMarker = (color, r=5) => L.circleMarker.bind(null, undefined, { radius: r, color, weight: 1.5, fillColor: color, fillOpacity: 0.85 });
+
+// ── Vector layers (loaded from local GeoJSON) ─────────────────────────────────
+let layers = {};
+
+async function loadGeoJSON(path, style, markerFn) {
+  const r = await fetch(path);
+  const data = await r.json();
+  if (markerFn) {
+    return L.geoJSON(data, {
+      pointToLayer: (f, ll) => L.circleMarker(ll, style),
+      onEachFeature: popup
+    });
+  }
+  return L.geoJSON(data, { style: () => style, onEachFeature: popup });
+}
+
+function popup(feature, layer) {
+  if (!feature.properties) return;
+  const rows = Object.entries(feature.properties)
+    .filter(([,v]) => v !== null && v !== '')
+    .map(([k,v]) => `<tr><td style="padding:2px 6px 2px 0;color:#666;font-size:11px">${k}</td><td style="font-size:11px">${v}</td></tr>`)
+    .join('');
+  if (rows) layer.bindPopup(`<table>${rows}</table>`);
+}
+
+const pointStyle = (color, r=5) => ({ radius: r, color, weight: 1.5, fillColor: color, fillOpacity: 0.85 });
+
+async function initLayers() {
+  layers = {
+    creekBank:    await loadGeoJSON('data/creek_bank.geojson',            lineStyle('#1a73e8')),
+    creekSurvey:  await loadGeoJSON('data/creek_survey.geojson',          lineStyle('#00b4d8')),
+    traverse:     await loadGeoJSON('data/creek_traverse.geojson',        pointStyle('#0077b6', 4), true),
+    manhole:      await loadGeoJSON('data/sewer_manhole.geojson',         pointStyle('#e67e22', 6), true),
+    lamphole:     await loadGeoJSON('data/sewer_lamphole.geojson',        pointStyle('#f1c40f', 5), true),
+    outfall:      await loadGeoJSON('data/outfall.geojson',               pointStyle('#e74c3c', 7), true),
+    restoration:  await loadGeoJSON('data/creek_restoration_area.geojson',fillStyle('#27ae60')),
+    workLimit:    await loadGeoJSON('data/redwood_work_limit.geojson',    fillStyle('#f39c12')),
+    boundary:     await loadGeoJSON('data/project_boundary.geojson',      fillStyle('#9b59b6')),
+  };
+
+  // Add initially-visible layers
+  const on = ['creekBank','creekSurvey','manhole','lamphole','outfall','restoration'];
+  on.forEach(k => layers[k].addTo(map));
+  hillshade.addTo(map);
+  sewerPlans.addTo(map);
+
+  // Fit map to creek bank extent
+  map.fitBounds(layers.creekBank.getBounds().pad(0.3));
+}
+
+initLayers();
+
+// ── Basemap radio buttons ─────────────────────────────────────────────────────
+document.getElementById('r-osm').addEventListener('change', () => { map.removeLayer(sat); osm.addTo(map); });
+document.getElementById('r-sat').addEventListener('change', () => { map.removeLayer(osm); sat.addTo(map); });
+
+// ── Raster checkboxes ─────────────────────────────────────────────────────────
+function bindTile(id, tileLayer) {
+  document.getElementById(id).addEventListener('change', e => {
+    e.target.checked ? tileLayer.addTo(map) : map.removeLayer(tileLayer);
+  });
+}
+bindTile('t-hillshade', hillshade);
+bindTile('t-pg5', pg5);
+bindTile('t-sewer', sewerPlans);
+
+// ── Vector checkboxes ─────────────────────────────────────────────────────────
+function bindVector(id, key) {
+  document.getElementById(id).addEventListener('change', e => {
+    if (!layers[key]) return;
+    e.target.checked ? layers[key].addTo(map) : map.removeLayer(layers[key]);
+  });
+}
+bindVector('l-creek-bank',  'creekBank');
+bindVector('l-creek-survey','creekSurvey');
+bindVector('l-traverse',    'traverse');
+bindVector('l-manhole',     'manhole');
+bindVector('l-lamphole',    'lamphole');
+bindVector('l-outfall',     'outfall');
+bindVector('l-restoration', 'restoration');
+bindVector('l-work-limit',  'workLimit');
+bindVector('l-boundary',    'boundary');
+</script>
+</body>
+</html>

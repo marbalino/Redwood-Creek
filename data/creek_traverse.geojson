@@ -1,0 +1,9 @@
+{
+"type": "FeatureCollection",
+"name": "creek_traverse",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{"type":"Feature","properties":{"id":"P1","easting":"6079661.49","northing":"2118456.33"},"geometry":{"type":"Point","coordinates":[-122.168388873896404,37.801097851389052]}},
+{"type":"Feature","properties":{"id":"P2","easting":"6079809.30","northing":"2118624.30"},"geometry":{"type":"Point","coordinates":[-122.167887720779945,37.801566313641821]}}
+]
+}
