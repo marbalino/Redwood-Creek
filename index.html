@@ -6,8 +6,6 @@
   <title>Redwood Creek</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet-rotate@0.2.8/dist/leaflet-rotate.css" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
@@ -194,7 +192,6 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet-rotate@0.2.8/dist/leaflet-rotate-src.js"></script>
-<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 <script>
 // ── Basemaps ──────────────────────────────────────────────────────────────────
 const osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -221,18 +218,6 @@ const dotMarker = (color, r=5) => L.circleMarker.bind(null, undefined, { radius:
 // ── Vector layers ─────────────────────────────────────────────────────────────
 let layers = {};
 let activeVersion = 2;
-
-async function loadClustered(path, color) {
-  const r = await fetch(path);
-  const data = await r.json();
-  const cluster = L.markerClusterGroup({ maxClusterRadius: 40 });
-  const style = { radius: 4, color, weight: 1, fillColor: color, fillOpacity: 0.85 };
-  L.geoJSON(data, {
-    pointToLayer: (f, ll) => L.circleMarker(ll, style),
-    onEachFeature: popup
-  }).addTo(cluster);
-  return cluster;
-}
 
 async function loadGeoJSON(path, style, isPoint) {
   const r = await fetch(path);
@@ -264,8 +249,8 @@ async function initLayers() {
     manhole:       await loadGeoJSON('data/sewer_manhole.geojson',         pointStyle('#e67e22', 6), true),
     lamphole:      await loadGeoJSON('data/sewer_lamphole.geojson',        pointStyle('#f1c40f', 5), true),
     outfall:       await loadGeoJSON('data/outfall.geojson',               pointStyle('#e74c3c', 7), true),
-    inlets:        await loadClustered('data/inlets.geojson',   '#2980b9'),
-    drains:        await loadClustered('data/oak_drains.geojson','#16a085'),
+    inlets:        await loadGeoJSON('data/inlets.geojson',    pointStyle('#2980b9', 4), true),
+    drains:        await loadGeoJSON('data/oak_drains.geojson', pointStyle('#16a085', 4), true),
     restoration:   await loadGeoJSON('data/creek_restoration_area.geojson',fillStyle('#27ae60')),
     buffer300:     await loadGeoJSON('data/buffer_300ft.geojson',          { color:'#9b59b6', weight:2, dashArray:'6 4', fillColor:'#9b59b6', fillOpacity:0.08 }),
   };
