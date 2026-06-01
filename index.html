@@ -131,6 +131,7 @@
 
   <div class="group-label">Project</div>
   <div class="layer-row"><input type="checkbox" id="l-restoration" checked /><div class="swatch" style="background:#27ae60;opacity:0.5"></div><label for="l-restoration">Restoration Area</label></div>
+  <div class="layer-row"><input type="checkbox" id="l-buffer" checked /><div class="swatch" style="background:#9b59b6;opacity:0.5;border:2px dashed #9b59b6"></div><label for="l-buffer">300ft Radius</label></div>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -198,12 +199,13 @@ async function initLayers() {
     lamphole:      await loadGeoJSON('data/sewer_lamphole.geojson',        pointStyle('#f1c40f', 5), true),
     outfall:       await loadGeoJSON('data/outfall.geojson',               pointStyle('#e74c3c', 7), true),
     restoration:   await loadGeoJSON('data/creek_restoration_area.geojson',fillStyle('#27ae60')),
+    buffer300:     await loadGeoJSON('data/buffer_300ft.geojson',          { color:'#9b59b6', weight:2, dashArray:'6 4', fillColor:'#9b59b6', fillOpacity:0.08 }),
   };
 
   // Start on v2
   layers.creekBank_v2.addTo(map);
   layers.creekSurvey_v2.addTo(map);
-  ['manhole','lamphole','outfall','restoration'].forEach(k => layers[k].addTo(map));
+  ['manhole','lamphole','outfall','restoration','buffer300'].forEach(k => layers[k].addTo(map));
   hillshade.addTo(map);
   sewerPlans.addTo(map);
 
@@ -266,6 +268,7 @@ bindVector('l-manhole',     'manhole');
 bindVector('l-lamphole',    'lamphole');
 bindVector('l-outfall',     'outfall');
 bindVector('l-restoration', 'restoration');
+bindVector('l-buffer',      'buffer300');
 
 // ── Geolocation ───────────────────────────────────────────────────────────────
 let locating = false;
